@@ -13,6 +13,29 @@ var (
   pwd = flag.String("p", "", "password")
 )
 
+/*
+
+json format
+
+{
+  credentiols: {
+    user:
+    cert:
+    pwd:
+  },
+  machines:[
+    {
+      ip:
+    }
+  ],
+  commands:{
+
+  }
+}
+
+*/
+
+
 func main() {
   flag.Parse()
 
