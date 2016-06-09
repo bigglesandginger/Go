@@ -1,7 +1,7 @@
 package main
 
 import (
-  "github.com/bigglesandginger/go/utils"
+  "github.com/bigglesandginger/common/go/utils"
   "fmt"
   "flag"
 )
