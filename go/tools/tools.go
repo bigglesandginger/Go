@@ -42,7 +42,15 @@ func main() {
   if len(*sshKey) == 0 || len(*sshServer) == 0 || len(*user) == 0 || len(*pwd) == 0 {
     flag.PrintDefaults()
   } else {
-    output := utils.SshToServer(*user, *pwd, *sshKey, *sshServer)
+    config := utils.GetConfig(*user, *pwd, *sshKey)
+    conn := utils.CreateConnection(config, *sshServer)
+    defer conn.Close()
+    var output string = ""
+    output += utils.RunCommand(conn, "ls -l")
+    utils.CopyToServer(conn, "foobar", "There once was a man from Nantucket")
+    output += utils.RunCommand(conn, "ls -l")
+    output += utils.RunCommand(conn, "ls -l testdir")
+
     fmt.Println(output)
   }
 }
