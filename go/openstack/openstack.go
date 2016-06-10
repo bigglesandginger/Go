@@ -6,7 +6,15 @@ import (
   "regexp"
   "io/ioutil"
   "encoding/json"
+  "flag"
 )
+
+var (
+  machinesFileName = flag.String("i", "machines.json", "location of the machines.json")
+  configFileName = flag.String("c", "template/openstack-compute/config", "location of config template file")
+  hostsDirectory = flag.String("o", "hosts", "location of output files")
+)
+
 
 func check(e error) {
   if e != nil {
@@ -48,9 +56,7 @@ func ReplaceAllSubmatchIndex(re *regexp.Regexp, str string, replaceWith string) 
 }
 
 func main() {
-  DIRECTORY := "/Users/ccoleman/it-ops/openstack/liberty/"
-
-  machines_raw, err := ioutil.ReadFile(DIRECTORY + "machines.json")
+  machines_raw, err := ioutil.ReadFile(*machinesFileName)
   check(err)
 
   machines := &Machines{}
@@ -58,7 +64,7 @@ func main() {
     panic(err)
   }
 
-  compute_template_raw, err := ioutil.ReadFile(DIRECTORY + "template/openstack-compute/config")
+  compute_template_raw, err := ioutil.ReadFile(*configFileName)
   check(err)
   compute_template := string(compute_template_raw)
 
@@ -71,7 +77,7 @@ func main() {
   fmt.Println(machines.Controller.IP)
   for _, computeNode := range machines.Compute {
     fmt.Println(computeNode.Name)
-    os.Mkdir(DIRECTORY + "/hosts/" + computeNode.Name, 0777)
+    os.Mkdir(*hostsDirectory + "/" + computeNode.Name, 0777)
 
     compute_template = ReplaceAllSubmatchIndex(reController, compute_template, machines.Controller.IP)
     compute_template = ReplaceAllSubmatchIndex(reThisHostName, compute_template, computeNode.Name)
@@ -79,11 +85,11 @@ func main() {
     compute_template = ReplaceAllSubmatchIndex(reThisHostTunnel, compute_template, computeNode.TunnelIP)
     compute_template = ReplaceAllSubmatchIndex(reAvailabilityZone, compute_template, "\"Uncharted Software Toronto Production\"")
 
-    err := ioutil.WriteFile(DIRECTORY + "/hosts/" + computeNode.Name + "/config", []byte(compute_template), 0644)
+    err := ioutil.WriteFile(*hostsDirectory + "/" + computeNode.Name + "/config", []byte(compute_template), 0644)
     check(err)
 
-    install := "scp -r template/openstack-compute/* root@"+computeNode.OriginalIP+":\nscp -r template/common root@"+computeNode.OriginalIP+":\nscp -r template/common.sh root@"+computeNode.OriginalIP+":\nscp -r " + DIRECTORY + "/hosts/" + computeNode.Name + "/config  root@"+computeNode.OriginalIP+":\nssh root@"+computeNode.OriginalIP+" sh install-common-and-network.sh "+computeNode.EthNeutron+" "+computeNode.EthCeph
-    err = ioutil.WriteFile(DIRECTORY + "/hosts/" + computeNode.Name + "/install.sh", []byte(install), 0744)
+    install := "scp -r template/openstack-compute/* root@"+computeNode.OriginalIP+":\nscp -r template/common root@"+computeNode.OriginalIP+":\nscp -r template/common.sh root@"+computeNode.OriginalIP+":\nscp -r " + *hostsDirectory + "/" + computeNode.Name + "/config  root@"+computeNode.OriginalIP+":\nssh root@"+computeNode.OriginalIP+" sh install-common-and-network.sh "+computeNode.EthNeutron+" "+computeNode.EthCeph
+    err = ioutil.WriteFile(*hostsDirectory + "/" + computeNode.Name + "/install.sh", []byte(install), 0744)
     check(err)
   }
 }
